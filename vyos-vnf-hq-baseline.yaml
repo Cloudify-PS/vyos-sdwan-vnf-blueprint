@@ -1,0 +1,266 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.2.0/plugin.yaml
+#  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+#  - https://raw.githubusercontent.com/MichaelShn/cloudify-utilities-plugin/patch-tmp/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.3.0/plugin.yaml
+
+inputs:
+
+  vyos_image_url:
+    default: "https://s3.eu-central-1.amazonaws.com/vnfs/vyos-1.1.7-installed-day0.qcow"
+
+  user:
+    description: >
+      Username for VyOS router
+    default: vyos
+  
+  password:
+    description: >
+      Password for VyOS router
+    default: "demo"
+
+  flavor:
+    description: >
+      An Openstack Flavor ID.
+    default: { get_secret: medium_image_flavor }
+
+
+
+dsl_definitions:
+
+  openstack_config: &openstack_config
+    username: { get_secret: keystone_username }
+    password: { get_secret: keystone_password }
+    tenant_name: { get_secret: keystone_tenant_name }
+    auth_url: { get_secret: keystone_url }
+    region: { get_secret: region }
+
+node_templates:
+
+  vyos_vnf_hq_baseline_config:
+    type: cloudify.terminal.raw
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            terminal_auth: &terminal_auth
+              user: {get_input: user}
+              password: {get_input: password}
+              ip: { get_attribute: [vyos_vnf_hq, ip] }
+              promt_check:
+                - '#'
+                - '$'
+              errors:
+                - "Command fail."
+            calls:
+              - action: exit
+        start:
+          inputs:
+            terminal_auth: *terminal_auth
+            calls:
+              - action: config              
+              - template: templates/vyos-vnf-hq-baseline.txt
+              - action: commit
+              - action: save
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vyos_vnf_hq
+      - type: cloudify.relationships.depends_on
+        target: mgmt_port
+
+     
+  vyos_vnf_hq:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config: *openstack_config
+      agent_config:
+        install_method: none
+      server:
+        key_name: ''
+        image: "vyos-image"
+        flavor: { get_input: flavor }
+      management_network_name: { get_property: [ mgmt_network, resource_id ] }
+    relationships:
+    - type: cloudify.openstack.server_connected_to_port
+      target: mgmt_port
+    - type: cloudify.openstack.server_connected_to_port
+      target: wan_network_port
+    - type: cloudify.openstack.server_connected_to_port
+      target: public_network_port
+    - type: cloudify.relationships.depends_on
+      target: vyos_image
+
+
+  mgmt_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: mgmt_network
+    - type: cloudify.relationships.depends_on
+      target: mgmt_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: security_group
+    - type: cloudify.openstack.port_connected_to_floating_ip
+      target: ip
+
+  public_network_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: public_network
+    - type: cloudify.relationships.depends_on
+      target: public_network_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: security_group
+
+  wan_network_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: wan_network
+    - type: cloudify.relationships.depends_on
+      target: wan_network_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: security_group
+
+
+
+  vyos_image:
+    type: cloudify.openstack.nodes.Image
+    properties:
+      image:
+        container_format: "bare"
+        disk_format: "qcow2"
+      openstack_config: *openstack_config
+      image_url: {get_input : vyos_image_url }
+      use_external_resource: true
+      create_if_missing: true
+      resource_id: "vyos-image"
+
+  mgmt_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: provider_subnet
+    relationships:
+    - target: mgmt_network
+      type: cloudify.relationships.contained_in
+
+  mgmt_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: provider
+
+  public_network_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: false
+      resource_id: public_net_subnet
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              gateway_ip: null
+              cidr: 192.168.10.0/24
+              ip_version: 4
+      cloudify.interfaces.validation:
+        creation:
+          inputs:
+            args:
+              gateway_ip: null
+              cidr: 192.168.10.0/24
+              ip_version: 4
+    relationships:
+    - target: public_network
+      type: cloudify.relationships.contained_in
+
+  public_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: false
+      resource_id: public_net
+
+  wan_network_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: false
+      resource_id: wan_net_subnet
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              gateway_ip: null
+              cidr: 192.168.30.0/24
+              ip_version: 4
+      cloudify.interfaces.validation:
+        creation:
+          inputs:
+            args:
+              gateway_ip: null
+              cidr: 192.168.30.0/24
+              ip_version: 4
+    relationships:
+    - target: wan_network
+      type: cloudify.relationships.contained_in
+
+  wan_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: false
+      resource_id: wan_net
+
+  security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_config
+      security_group:
+#        name: security_group
+        description: generic security group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: "TCP"
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: "UDP"
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: "ICMP"
+          port_range_min: 0
+          port_range_max: 0
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: 47
+  ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *openstack_config
+      floatingip:
+        floating_network_name: { get_secret: external_network_name }
+
+
+outputs:
+
+  vyos_vnf_hq_mgmt_ip:
+    value: { get_attribute: [vyos_vnf_hq, ip] }
+  vyos_vnf_hq_wan_ip:
+    value: { get_attribute: [vyos_vnf_hq, networks, wan_net] }
+  vyos_vnf_hq_username:
+    value: { get_input: user }
+  vyos_vnf_hq_password:
+    value: { get_input: password }
+

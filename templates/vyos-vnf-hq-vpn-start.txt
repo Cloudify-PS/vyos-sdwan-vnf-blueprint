@@ -1,0 +1,5 @@
+set interfaces tunnel {{TUNNEL_INTERFACE}} address '{{HQ_TUNNEL_ADDRESS}}'
+set interfaces tunnel {{TUNNEL_INTERFACE}} encapsulation 'gre'
+set interfaces tunnel {{TUNNEL_INTERFACE}} local-ip '{{HQ_TUNNEL_LOCAL_IP}}'
+set interfaces tunnel {{TUNNEL_INTERFACE}} remote-ip '{{HQ_TUNNEL_REMOTE_IP}}'
+

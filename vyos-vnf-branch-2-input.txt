@@ -1,0 +1,9 @@
+branch_hostname: "branch-2"
+branch_lan_address: "192.168.102.1/24"
+branch_lan_name: "branch-2-lan"
+branch_tunnel_address: "192.168.200.6/30"
+hq_tunnel_address: "192.168.200.5/30"
+hq_tunnel_interface: "tun2"
+hq_deployment_name: "vyos-hq-deployment"
+hq_blueprint_name: "vyos-hq-blueprint"
+

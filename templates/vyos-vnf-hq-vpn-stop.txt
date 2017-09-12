@@ -1,0 +1,2 @@
+delete interface tunnel {{TUNNEL_INTERFACE}}
+
