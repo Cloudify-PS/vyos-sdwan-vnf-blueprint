@@ -10,13 +10,13 @@ imports:
 inputs:
 
   vyos_image_url:
-    default: "https://s3.eu-central-1.amazonaws.com/vnfs/vyos-1.1.7-installed-day0.qcow"
+    default: "https://s3-eu-west-1.amazonaws.com/cloudify-labs/images/vyos-1.1.7-installed-day0.qcow"
 
   user:
     description: >
       Username for VyOS router
     default: vyos
-  
+
   password:
     description: >
       Password for VyOS router
@@ -61,7 +61,7 @@ node_templates:
           inputs:
             terminal_auth: *terminal_auth
             calls:
-              - action: config              
+              - action: config
               - template: templates/vyos-vnf-hq-baseline.txt
               - action: commit
               - action: save
@@ -71,7 +71,7 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: mgmt_port
 
-     
+
   vyos_vnf_hq:
     type: cloudify.openstack.nodes.Server
     properties:
@@ -263,4 +263,3 @@ outputs:
     value: { get_input: user }
   vyos_vnf_hq_password:
     value: { get_input: password }
-

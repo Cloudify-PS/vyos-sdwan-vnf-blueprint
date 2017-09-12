@@ -11,7 +11,7 @@ imports:
 inputs:
 
   vyos_image_url:
-    default: "https://s3.eu-central-1.amazonaws.com/vnfs/vyos-1.1.7-installed-day0.qcow"
+    default: "https://s3-eu-west-1.amazonaws.com/cloudify-labs/images/vyos-1.1.7-installed-day0.qcow"
 
   flavor:
     description: >
