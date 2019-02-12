@@ -2,10 +2,10 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.2.0/plugin.yaml
+  - plugin:cloudify-openstack-plugin
 #  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
 #  - https://raw.githubusercontent.com/MichaelShn/cloudify-utilities-plugin/patch-tmp/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.3.0/plugin.yaml
+  - plugin:cloudify-utilities-plugin
 
 
 inputs:
