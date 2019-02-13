@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
   - plugin:cloudify-openstack-plugin
 #  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
 #  - https://raw.githubusercontent.com/MichaelShn/cloudify-utilities-plugin/patch-tmp/plugin.yaml
@@ -62,7 +62,7 @@ node_templates:
             terminal_auth: *terminal_auth
             calls:
               - action: config
-              - template: templates/vyos-vnf-hq-baseline.txt
+              - template: resources/vyos-vnf-hq-baseline.config
               - action: commit
               - action: save
     relationships:

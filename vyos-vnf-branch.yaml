@@ -1,12 +1,10 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
   - plugin:cloudify-openstack-plugin
-#  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
 #  - https://raw.githubusercontent.com/MichaelShn/cloudify-utilities-plugin/patch-tmp/plugin.yaml
   - plugin:cloudify-utilities-plugin
-
 
 inputs:
 
@@ -120,7 +118,7 @@ node_templates:
             terminal_auth: *terminal_auth_hq
             calls:
               - action: config
-              - template: templates/vyos-vnf-hq-vpn-start.txt
+              - template: resources/vyos-vnf-hq-vpn-start.config
                 params:
                   TUNNEL_INTERFACE: { get_input: hq_tunnel_interface }
                   HQ_TUNNEL_ADDRESS: { get_input: hq_tunnel_address }
@@ -133,7 +131,7 @@ node_templates:
             terminal_auth: *terminal_auth_hq
             calls:
               - action: config
-              - template: templates/vyos-vnf-hq-vpn-start.txt
+              - template: resources/vyos-vnf-hq-vpn-start.config
                 params:
                   TUNNEL_INTERFACE: { get_input: hq_tunnel_interface }
               - action: commit
@@ -171,7 +169,7 @@ node_templates:
             terminal_auth: *terminal_auth_branch
             calls:
               - action: config
-              - template: templates/vyos-vnf-branch-vpn-start.txt
+              - template: resources/vyos-vnf-branch-vpn-start.config
                 params:
                   BRANCH_TUNNEL_ADDRESS: { get_input: branch_tunnel_address }
                   BRANCH_TUNNEL_LOCAL_IP: { get_attribute: [vyos_vnf_branch, networks, wan_net, 0] }
@@ -220,7 +218,7 @@ node_templates:
             terminal_auth: *terminal_auth
             calls:
               - action: config
-              - template: templates/vyos-vnf-branch-baseline.txt
+              - template: resources/vyos-vnf-branch-baseline.config
                 params:
                   BRANCH_HOSTNAME: { get_input: branch_hostname }
                   BRANCH_LAN_ADDRESS: { get_attribute: [vyos_vnf_branch, networks, { get_input: branch_lan_name }, 0] }
